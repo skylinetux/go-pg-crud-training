@@ -1,0 +1,19 @@
+apiVersion: v1
+items:
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/host.generated: "true"
+    name: go-pg-crud
+  spec:
+    host: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local
+    port:
+      targetPort: 8080
+    to:
+      kind: Service
+      name: go-pg-crud
+      weight: 100
+    wildcardPolicy: None
+kind: List
+

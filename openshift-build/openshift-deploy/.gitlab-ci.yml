@@ -1,0 +1,85 @@
+variables:
+  PACKAGE_PATH: /go/src/gitlab.com/go-pg-crud
+  OPENSHIFT_PROJECT: go-pg-crud
+
+services:
+  - name: docker:dind
+    command: ["--insecure-registry=$DOCKER_REGISTRY"]
+
+stages:
+  - test
+  - build
+  - deploy
+
+# A hack to make Golang-in-Gitlab happy
+.anchors:
+  - &inject-gopath
+      mkdir -p $(dirname ${PACKAGE_PATH})
+      && ln -s ${CI_PROJECT_DIR} ${PACKAGE_PATH}
+      && cd ${PACKAGE_PATH}
+
+Run test:
+  stage: test
+  image: golang:1.10-alpine3.7
+  before_script:
+    - apk add --no-cache curl git
+    - export REVISION="$(git rev-parse --short HEAD)" && echo $REVISION | tr -d '\n' > variables
+    - wget https://github.com/golang/dep/releases/download/v0.5.4/dep-linux-amd64 -O /go/bin/dep
+    - chmod +x /go/bin/dep
+    - *inject-gopath
+  script:
+    - dep init
+    - dep ensure -v -vendor-only
+    - go test .
+    - cat variables
+  artifacts:
+    name: "vendor-$CI_PIPELINE_ID"
+    paths:
+      - vendor/
+      - variables
+
+Build app:
+  stage: build
+  before_script:
+    - export REVISION="$(cat variables | tr -d '\n')"
+    - cat variables
+    - ls -la
+    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY
+  dependencies:
+    - Run test
+  image: docker:19.03.13-git
+  script:
+    - ls -la
+    - cat variables
+    - docker build -t $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION} .
+    - docker push $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
+
+Create manifest:
+  stage: build
+  image: traherom/kustomize-docker
+  dependencies:
+    - Run test
+  before_script:
+    - export REVISION="$(cat variables | tr -d '\n')"
+  script:
+    - echo ${REVISION}
+    - cd kustomize && ls -la
+    - kustomize edit set image $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:latest=$DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
+    - cat kustomization.yaml
+    - kustomize build .
+    - kustomize build . > kustomize_deploy.yaml
+  artifacts:
+    paths:
+    - kustomize/kustomize_deploy.yaml
+
+Deploy:
+  stage: deploy
+  image: widerin/openshift-cli
+  dependencies:
+    - Create manifest
+  before_script:
+    - oc login --token=$OPENSHIFT_TOKEN --server=$OPENSHIFT_API --insecure-skip-tls-verify=true
+    - oc project $OPENSHIFT_PROJECT
+  script:
+    - oc create -f kustomize/kustomize_deploy.yaml || true
+    - oc replace -f kustomize/kustomize_deploy.yaml

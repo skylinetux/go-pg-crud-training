@@ -1,0 +1,31 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: go-pg-crud
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    app: go-pg-crud
+  strategy:
+  template:
+    metadata:
+      labels:
+        app: go-pg-crud
+    spec:
+      containers:
+      - image: openshift-infra.test.neoflex.local:5000/go-pg-crud/go-pg-crud:latest
+        imagePullPolicy: Always
+        name: go-pg-crud
+        ports:
+        - containerPort: 8888
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+

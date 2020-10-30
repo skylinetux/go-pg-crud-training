@@ -1,0 +1,4 @@
+resources:
+- 01-deploymentconfig.yaml
+- 02-service.yaml
+- 03-route.yaml

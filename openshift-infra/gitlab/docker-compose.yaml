@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  gitlab-web:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab-web
+    hostname: openshift-infra.test.neoflex.local # change hostname
+    volumes:
+      - './gitlab-config:/etc/gitlab'
+      - './gitlab-logs:/var/log/gitlab'
+      - './gitlab-data:/var/opt/gitlab'
+    ports:
+      - '2222:22'
+      - '80:80'
+      - '443:443'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        external_url 'http://openshift-infra.test.neoflex.local' # change hostname
+        nginx['enable'] = true
+        #registry_external_url 'http://localhost:4567'
+        #registry['enable'] = true
+        #unicorn['socket'] = '/opt/gitlab/var/unicorn/gitlab.socket'
+    networks:
+      - gitlab-network
+        #network_mode: "host"
+
+  gitlab-runner1:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner1
+    hostname: gitlab-runner1
+    volumes:
+      - './gitlab-runner1-config:/etc/gitlab-runner:Z'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    network_mode: "host"
+    #    networks:
+    #      - gitlab-network
+
+networks:
+  gitlab-network:
+    name: gitlab-network
+

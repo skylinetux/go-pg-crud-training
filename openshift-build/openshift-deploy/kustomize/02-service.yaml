@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-pg-crud
+spec:
+  clusterIP: 172.30.115.42
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: go-pg-crud
+  sessionAffinity: None
+  type: ClusterIP
+
