@@ -1,0 +1,16 @@
+$TTL 86400
+@        IN     SOA     test.neoflex.local. test.neoflex.local.local. (
+                       2020100601
+                       43200
+                       3600
+                       3600000
+                       2592000 )
+
+	IN      NS      ns1.test.neoflex.local.
+	IN      NS      ns2.test.neoflex.local.
+
+ns1	IN	A 	192.168.122.10
+ns2	IN	A 	192.168.122.10
+openshift-infra	IN	A	192.168.122.40
+openshift-build	IN	A	192.168.122.45
+

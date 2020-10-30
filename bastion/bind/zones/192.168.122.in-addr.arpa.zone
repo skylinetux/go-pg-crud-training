@@ -1,0 +1,28 @@
+$TTL 86400
+@        IN     SOA     ocp-test.neoflex.local. ocp-test.neoflex.local.local. (
+                       2020040804
+                       43200
+                       3600
+                       3600000
+                       2592000 )
+
+       IN      NS      ns1.ocp-test.neoflex.local. 
+       IN      NS      ns2.ocp-test.neoflex.local. 
+
+;10 IN PTR ns1.ocp-test.neoflex.local. 
+;10 IN PTR ns2.ocp-test.neoflex.local. 
+;10      IN      PTR     lb.ocp-test.neoflex.local. 
+;10      IN      PTR     api.ocp-test.neoflex.local. 
+;10      IN      PTR     api-int.ocp-test.neoflex.local. 
+10      IN      PTR     bastion.ocp-test.neoflex.local. 
+15 IN PTR bootstrap.ocp-test.neoflex.local. 
+20 IN PTR master-0.ocp-test.neoflex.local. 
+21      IN      PTR     master-1.ocp-test.neoflex.local. 
+22      IN      PTR     master-2.ocp-test.neoflex.local. 
+30      IN      PTR     worker-0.ocp-test.neoflex.local. 
+31      IN      PTR     worker-1.ocp-test.neoflex.local. 
+;20      IN      PTR     etcd-0.ocp-test.neoflex.local. 
+;21      IN      PTR     etcd-1.ocp-test.neoflex.local. 
+;22      IN      PTR     etcd-2.ocp-test.neoflex.local.
+40	IN	PTR	openshift-deploy.test.neoflex.local.
+
