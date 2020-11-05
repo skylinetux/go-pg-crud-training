@@ -41,11 +41,11 @@
 # получить список нод и их статус
 $ oc get nodes
 NAME STATUS ROLES AGE VERSION
-master-0.ocp-test.neoflex.local Ready master,worker 39d v1.18.3+6c42de8
-master-1.ocp-test.neoflex.local Ready master,worker 39d v1.18.3+6c42de8
-master-2.ocp-test.neoflex.local Ready master,worker 39d v1.18.3+6c42de8
-worker-0.ocp-test.neoflex.local Ready worker 39d v1.18.3+6c42de8
-worker-1.ocp-test.neoflex.local Ready worker 39d v1.18.3+6c42de8
+master-0.ocp-test.<domain_name> Ready master,worker 39d v1.18.3+6c42de8
+master-1.ocp-test.<domain_name> Ready master,worker 39d v1.18.3+6c42de8
+master-2.ocp-test.<domain_name> Ready master,worker 39d v1.18.3+6c42de8
+worker-0.ocp-test.<domain_name> Ready worker 39d v1.18.3+6c42de8
+worker-1.ocp-test.<domain_name> Ready worker 39d v1.18.3+6c42de8
 
 # получить версию кластера
 $ oc get clusterversion
@@ -62,7 +62,7 @@ $ oc edit image.config.openshift.io/cluster
 spec:
 registrySources:
 insecureRegistries:
-- openshift-infra.test.neoflex.local:5000
+- openshift-infra.test.<domain_name>:5000
 ...
 ```
 
@@ -77,7 +77,7 @@ $ oc new-project go-pg-crud
 
 ```console
 # создаём secret типа docker-registry с именем nexus-pull
-$ oc create secret docker-registry nexus-pull --docker-server=openshift-infra.test.neoflex.local:5000 --docker-username=gitlab --docker-password=пароль\_пользователя --docker-email=gitlab@test.neoflex.local
+$ oc create secret docker-registry nexus-pull --docker-server=openshift-infra.test.<domain_name>:5000 --docker-username=gitlab --docker-password=пароль\_пользователя --docker-email=gitlab@test.<domain_name>
 ```
 
 Неоходимо пользователю default в проекте go-pg-crud предоставить права на pull из репозитория:
@@ -143,7 +143,7 @@ Gitlab CI как основной инструмент для CI\\CD. Также
 # инициализируем репозиторий
 $ git init
 # указываем ссылку на репозиторий
-$ git remote add origin ssh://git@openshift-infra.test.neoflex.local:2222/ashtodin/go-pg-crud-build.git
+$ git remote add origin ssh://git@openshift-infra.test.<domain_name>:2222/ashtodin/go-pg-crud-build.git
 # добавляем все файлы в директории в индекс (staging area)
 $ git add .
 # делаем сохранение индекса с сообщением "Initial commit" 
@@ -176,7 +176,7 @@ $ git push -u origin master
 
 ```json
 {
-"insecure-registries" : \["openshift-infra.test.neoflex.local:5000"\]
+"insecure-registries" : \["openshift-infra.test.<domain_name>:5000"\]
 }
 
 # после изменения настроек необходимо перезапустить сервис docker: systemctl restart docker
@@ -185,7 +185,7 @@ $ git push -u origin master
 Проверить доступность docker registry:
 
 ```console
-$ docker login openshift-infra.test.neoflex.local:5000 -u gitlab
+$ docker login openshift-infra.test.<domain_name>:5000 -u gitlab
 Password: 
 WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
 Configure a credential helper to remove this warning. See
@@ -209,7 +209,7 @@ Login Succeeded
 Клонируем репозиторий с кодом:
 
 ```console
-$ git clone ssh://git@openshift-infra.test.neoflex.local:2222/ashtodin/openshift-deploy.git
+$ git clone ssh://git@openshift-infra.test.<domain_name>:2222/ashtodin/openshift-deploy.git
 ```
 
 Собираем приложение, пишем Dockerfile и собираем образ:
@@ -256,7 +256,7 @@ Successfully tagged go-pg-crud:latest
 $ docker run -p 8080:8080 go-pg-crud:latest 
 ```
 
-После запуска образа приложение доступно по ссылке: [http://openshift-build.test.neoflex.local:8080/](http://openshift-build.test.neoflex.local:8080/)
+После запуска образа приложение доступно по ссылке: [http://openshift-build.test.<domain_name>:8080/](http://openshift-build.test.<domain_name>:8080/)
 
 #### Пишем pipeline для Gitlab CI
 
@@ -354,10 +354,10 @@ script:
 
 Т.к. в pipeline используются переменные, то необходимо их добавить в проект:
 
-* DOCKER\_REGISTRY = openshift-infra.test.neoflex.local:5000    
+* DOCKER\_REGISTRY = openshift-infra.test.<domain_name>:5000    
 * DOCKER\_REGISTRY\_PASSWORD = пароль пользователя, в данном случае пароль ранее созданного пользователя gitlab  
 * DOCKER\_REGISTRY\_USER = gitlab    
-* OPENSHIFT\_API = [https://api.ocp-test.neoflex.local:6443](https://api.ocp-test.neoflex.local:6443)  
+* OPENSHIFT\_API = [https://api.ocp-test.<domain_name>:6443](https://api.ocp-test.<domain_name>:6443)  
 * OPENSHIFT\_TOKEN = токен пользователя OpenShift - go-pg-crud  
     
 
@@ -417,7 +417,7 @@ labels:
 app: go-pg-crud
 spec:
 containers:
-- image: openshift-infra.test.neoflex.local:5000/go-pg-crud/go-pg-crud:latest
+- image: openshift-infra.test.<domain_name>:5000/go-pg-crud/go-pg-crud:latest
 imagePullPolicy: Always
 name: go-pg-crud
 ports:
@@ -464,7 +464,7 @@ annotations:
 openshift.io/host.generated: "true"
 name: go-pg-crud
 spec:
-host: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local
+host: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>
 port:
 targetPort: 8080
 to:
@@ -509,7 +509,7 @@ go-pg-crud ClusterIP 172.30.115.42 <none> 80/TCP 15h
 # получаем список route в проекте go-pg-crud
 $ oc get route -n go-pg-crud
 NAME HOST/PORT PATH SERVICES PORT TERMINATION WILDCARD
-go-pg-crud go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local go-pg-crud 8080 None
+go-pg-crud go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name> go-pg-crud 8080 None
 ```
 
-Приложение будет доступно по ссылке [http://go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local](http://go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local)
+Приложение будет доступно по ссылке [http://go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>](http://go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>)
