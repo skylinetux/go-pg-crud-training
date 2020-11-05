@@ -77,7 +77,7 @@ $ oc new-project go-pg-crud
 
 ```console
 # создаём secret типа docker-registry с именем nexus-pull
-$ oc create secret docker-registry nexus-pull --docker-server=openshift-infra.test.<domain_name>:5000 --docker-username=gitlab --docker-password=пароль\_пользователя --docker-email=gitlab@test.<domain_name>
+$ oc create secret docker-registry nexus-pull --docker-server=openshift-infra.test.<domain_name>:5000 --docker-username=gitlab --docker-password=пароль_пользователя --docker-email=gitlab@test.<domain_name>
 ```
 
 Неоходимо пользователю default в проекте go-pg-crud предоставить права на pull из репозитория:
@@ -176,7 +176,7 @@ $ git push -u origin master
 
 ```json
 {
-"insecure-registries" : \["openshift-infra.test.<domain_name>:5000"\]
+"insecure-registries" : ["openshift-infra.test.<domain_name>:5000"]
 }
 
 # после изменения настроек необходимо перезапустить сервис docker: systemctl restart docker
@@ -227,13 +227,13 @@ RUN apk add --no-cache curl git
 # скачиваем зависимости для приложения
 RUN go get github.com/lib/pq
 # скачиваем зависимости для приложения
-RUN go get github.com/prometheus/client\_golang/prometheus/promhttp
+RUN go get github.com/prometheus/client_golang/prometheus/promhttp
 # запускаем сборку приложения
 RUN go build -o go-pg-crud
 # указываем порт рабочего приложения
 EXPOSE 8080/tcp
 # указываем путь к собранному ранее приложению, которое docker будет выполняться при запуск образа
-ENTRYPOINT \["/go/src/app/go-pg-crud"\]
+ENTRYPOINT ["/go/src/app/go-pg-crud"]
 ```
 
 Сборка образа:
@@ -245,7 +245,7 @@ Sending build context to Docker daemon 543.7kB
 Step 1/9 : FROM golang:1.10-alpine3.7
 ---> 0c7ca152fa16
 ....
-Step 9/9 : ENTRYPOINT \["/go/src/app/go-pg-crud"\]
+Step 9/9 : ENTRYPOINT ["/go/src/app/go-pg-crud"]
 ---> Running in b46a51f1687a
 Removing intermediate container b46a51f1687a
 ---> 0e1b32744b13
@@ -265,13 +265,13 @@ $ docker run -p 8080:8080 go-pg-crud:latest
 ```yaml
 # обьявляем переменные
 variables:
-PACKAGE\_PATH: /go/src/gitlab.com/go-pg-crud
-OPENSHIFT\_PROJECT: go-pg-crud
+PACKAGE_PATH: /go/src/gitlab.com/go-pg-crud
+OPENSHIFT_PROJECT: go-pg-crud
 
 # указываем, что при запуске pipeline необходимо запустить docker образ docker:dind
 services:
 - name: docker:dind
-command: \["--insecure-registry=$DOCKER\_REGISTRY"\]
+command: ["--insecure-registry=$DOCKER\_REGISTRY"]
 
 # список шагов в pipeline
 stages:
@@ -282,28 +282,28 @@ stages:
 # функция, при выполнении которой создаётся рабочая директория из переменной PACKAGE\_PATH и ссылка на эту директорию из переменной CI\_PROJECT\_DIR. Необходимо для корректной сборки проекта, костыль в общем.
 .anchors:
 - &inject-gopath
-mkdir -p $(dirname ${PACKAGE\_PATH})
-&& ln -s ${CI\_PROJECT\_DIR} ${PACKAGE\_PATH}
-&& cd ${PACKAGE\_PATH}
+mkdir -p $(dirname ${PACKAGE_PATH})
+&& ln -s ${CI_PROJECT_DIR} ${PACKAGE_PATH}
+&& cd ${PACKAGE_PATH}
 
 # шаг запуска тестов
 # скачиваем зависимости запускаем тесты
 Run test:
 stage: test
 image: golang:1.10-alpine3.7
-before\_script:
+before_script:
 - apk add --no-cache curl git
-- export REVISION="$(git rev-parse --short HEAD)" && echo $REVISION | tr -d '\\n' > variables
+- export REVISION="$(git rev-parse --short HEAD)" && echo $REVISION | tr -d '\n' > variables
 - wget https://github.com/golang/dep/releases/download/v0.5.4/dep-linux-amd64 -O /go/bin/dep
 - chmod +x /go/bin/dep
-- \*inject-gopath
+- *inject-gopath
 script:
 - dep init
 - dep ensure -v -vendor-only
 - go test .
 - cat variables
 artifacts:
-name: "vendor-$CI\_PIPELINE\_ID"
+name: "vendor-$CI_PIPELINE_ID"
 paths:
 - vendor/
 - variables
@@ -312,15 +312,15 @@ paths:
 # собираем приложение и загружаем в nexus
 Build app:
 stage: build
-before\_script:
-- export REVISION="$(cat variables | tr -d '\\n')"
-- docker login -u $DOCKER\_REGISTRY\_USER -p $DOCKER\_REGISTRY\_PASSWORD $DOCKER\_REGISTRY
+before_script:
+- export REVISION="$(cat variables | tr -d '\n')"
+- docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY
 dependencies:
 - Run test
 image: docker:19.03.13-git
 script:
-- docker build -t $DOCKER\_REGISTRY/go-pg-crud/go-pg-crud:${REVISION} .
-- docker push $DOCKER\_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
+- docker build -t $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION} .
+- docker push $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
 
 # шаг подготовки yaml манифестов для разворачивания в OpenShift
 Create manifest:
@@ -328,15 +328,15 @@ stage: build
 image: traherom/kustomize-docker
 dependencies:
 - Run test
-before\_script:
+before_script:
 - export REVISION="$(cat variables | tr -d '\\n')"
 script:
-- kustomize edit set image $DOCKER\_REGISTRY/go-pg-crud/go-pg-crud:latest=$DOCKER\_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
+- kustomize edit set image $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:latest=$DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
 - kustomize build .
-- kustomize build . > kustomize\_deploy.yaml
+- kustomize build . > kustomize_deploy.yaml
 artifacts:
 paths:
-- kustomize/kustomize\_deploy.yaml
+- kustomize/kustomize_deploy.yaml
 
 # шаг разворачивания приложения в OpenShift
 Deploy:
@@ -344,12 +344,12 @@ stage: deploy
 image: widerin/openshift-cli
 dependencies:
 - Create manifest
-before\_script:
-- oc login --token=$OPENSHIFT\_TOKEN --server=$OPENSHIFT\_API --insecure-skip-tls-verify=true
-- oc project $OPENSHIFT\_PROJECT
+before_script:
+- oc login --token=$OPENSHIFT_TOKEN --server=$OPENSHIFT_API --insecure-skip-tls-verify=true
+- oc project $OPENSHIFT_PROJECT
 script:
-- oc create -f kustomize/kustomize\_deploy.yaml || true
-- oc replace -f kustomize/kustomize\_deploy.yaml
+- oc create -f kustomize/kustomize_deploy.yaml || true
+- oc replace -f kustomize/kustomize_deploy.yaml
 ```
 
 Т.к. в pipeline используются переменные, то необходимо их добавить в проект:
@@ -377,7 +377,7 @@ RUN go build -o go-pg-crud
 
 EXPOSE 8080/tcp
 
-ENTRYPOINT \["/go/src/app/go-pg-crud"\]
+ENTRYPOINT ["/go/src/app/go-pg-crud"]
 ```
   
 
