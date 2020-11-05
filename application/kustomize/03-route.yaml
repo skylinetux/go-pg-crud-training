@@ -7,7 +7,7 @@ items:
       openshift.io/host.generated: "true"
     name: go-pg-crud
   spec:
-    host: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local
+    host: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>
     port:
       targetPort: 8080
     to:

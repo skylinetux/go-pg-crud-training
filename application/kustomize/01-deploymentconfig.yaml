@@ -14,7 +14,7 @@ spec:
         app: go-pg-crud
     spec:
       containers:
-      - image: openshift-infra.test.neoflex.local:5000/go-pg-crud/go-pg-crud:latest
+      - image: openshift-infra.test.<domain_name>:5000/go-pg-crud/go-pg-crud:latest
         imagePullPolicy: Always
         name: go-pg-crud
         ports:

@@ -10,7 +10,7 @@ docker exec -it gitlab-runner1 \
     --registration-token ${registration_token} \
     --locked=false \
     --description docker-stable \
-    --url http://openshift-deploy.test.neoflex.local \
+    --url http://openshift-deploy.test.<domain_name> \
     --executor docker \
     --docker-image docker:stable \
     --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
