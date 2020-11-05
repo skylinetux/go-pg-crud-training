@@ -162,7 +162,7 @@ $ git push -u origin master
 
 Приложение работает с БД, поэтому отдельно запущен postgres на хосте openshift-infra.
 
-Создана база данных **books\_database** и таблица books.
+Создана база данных **books_database** и таблица books.
 
 #### ВМ openshift-build
 
@@ -271,7 +271,7 @@ OPENSHIFT_PROJECT: go-pg-crud
 # указываем, что при запуске pipeline необходимо запустить docker образ docker:dind
 services:
 - name: docker:dind
-command: ["--insecure-registry=$DOCKER\_REGISTRY"]
+command: ["--insecure-registry=$DOCKER_REGISTRY"]
 
 # список шагов в pipeline
 stages:
@@ -279,7 +279,7 @@ stages:
 - build
 - deploy
 
-# функция, при выполнении которой создаётся рабочая директория из переменной PACKAGE\_PATH и ссылка на эту директорию из переменной CI\_PROJECT\_DIR. Необходимо для корректной сборки проекта, костыль в общем.
+# функция, при выполнении которой создаётся рабочая директория из переменной PACKAGE_PATH и ссылка на эту директорию из переменной CI_PROJECT_DIR. Необходимо для корректной сборки проекта, костыль в общем.
 .anchors:
 - &inject-gopath
 mkdir -p $(dirname ${PACKAGE_PATH})
@@ -329,7 +329,7 @@ image: traherom/kustomize-docker
 dependencies:
 - Run test
 before_script:
-- export REVISION="$(cat variables | tr -d '\\n')"
+- export REVISION="$(cat variables | tr -d '\n')"
 script:
 - kustomize edit set image $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:latest=$DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
 - kustomize build .
