@@ -18,7 +18,7 @@ spec:
         imagePullPolicy: Always
         name: go-pg-crud
         ports:
-        - containerPort: 8888
+        - containerPort: 8080
           protocol: TCP
         resources: {}
         terminationMessagePath: /dev/termination-log
