@@ -60,7 +60,6 @@ Create manifest:
   script:
     - cd kustomize
     - kustomize edit set image $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:latest=$DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
-    - kustomize build .
     - kustomize build . > kustomize_deploy.yaml
   artifacts:
     paths:
