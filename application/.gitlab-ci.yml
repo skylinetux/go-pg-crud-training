@@ -42,15 +42,11 @@ Build app:
   stage: build
   before_script:
     - export REVISION="$(cat variables | tr -d '\n')"
-    - cat variables
-    - ls -la
     - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY
   dependencies:
     - Run test
   image: docker:19.03.13-git
   script:
-    - ls -la
-    - cat variables
     - docker build -t $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION} .
     - docker push $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
 
@@ -62,10 +58,8 @@ Create manifest:
   before_script:
     - export REVISION="$(cat variables | tr -d '\n')"
   script:
-    - echo ${REVISION}
-    - cd kustomize && ls -la
+    - cd kustomize
     - kustomize edit set image $DOCKER_REGISTRY/go-pg-crud/go-pg-crud:latest=$DOCKER_REGISTRY/go-pg-crud/go-pg-crud:${REVISION}
-    - cat kustomization.yaml
     - kustomize build .
     - kustomize build . > kustomize_deploy.yaml
   artifacts:
