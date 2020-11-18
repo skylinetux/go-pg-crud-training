@@ -248,7 +248,7 @@ http_port = 3000 # grafana будет запущена на 3000 порту
         {
             "folder": "",
             "name": "0",
-            "options": { # путь хранения дашбордов, которые будут использоваться как дочерние
+            "options": { // путь хранения дашбордов, которые будут использоваться как дочерние
                 "path": "/grafana-dashboard-definitions/"
             },
             "orgId": 1,
@@ -268,7 +268,7 @@ http_port = 3000 # grafana будет запущена на 3000 порту
             "access": "proxy",
             "name": "prometheus",
             "type": "prometheus",
-            "url": "http://prometheus:9090", # адрес service prometheus
+            "url": "http://prometheus:9090", // адрес service prometheus
         }
     ]
 }
