@@ -1,5 +1,6 @@
 resources:
-- 01-alermanager-config-cm.yaml
+- 01-alertmanager-config-cm.yaml
 - 02-alertmanager-dc.yaml
 - 03-alertmanager-svc.yaml
 - 04-alertmanager-route.yaml
+namespace: training-monitoring

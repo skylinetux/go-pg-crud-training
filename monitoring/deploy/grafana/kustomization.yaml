@@ -6,3 +6,4 @@ resources:
 - 05-grafana-dc.yaml
 - 06-grafana-svc.yaml
 - 07-grafana-route.yaml
+namespace: training-monitoring

@@ -15,15 +15,9 @@ data:
       webhook_configs:
       - send_resolved: true
         url: 'http://alertmanager-bot:8080'
-    inhibit_rules:
-      - source_match:
-          severity: 'critical'
-        target_match:
-          severity: 'warning'
-        equal: ['alertname', 'dev', 'instance']
 kind: ConfigMap
 metadata:
-  name: alermanager-config
+  name: alertmanager-config
   labels:
     training-monitoring: 'true'
 

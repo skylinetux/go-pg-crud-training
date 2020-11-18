@@ -36,7 +36,7 @@ spec:
         terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /etc/alertmanager/
-          name: alermanager-config
+          name: alertmanager-config
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -45,8 +45,8 @@ spec:
       volumes:
       - configMap:
           defaultMode: 420
-          name: alermanager-config
-        name: alermanager-config
+          name: alertmanager-config
+        name: alertmanager-config
   test: false
   triggers:
   - type: ConfigChange

@@ -4,6 +4,7 @@ metadata:
   labels:
     training-monitoring: "true"
   name: prometheus
+  namespace: training-monitoring
 spec:
   host: prometheus-training-monitoring.apps.ocp-test.<domain_name>
   port:

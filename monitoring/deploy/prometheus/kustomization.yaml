@@ -4,3 +4,4 @@ resources:
 - 03-prometheus-dc.yaml
 - 04-prometheus-svc.yaml
 - 05-prometheus-route.yaml
+namespace: training-monitoring
