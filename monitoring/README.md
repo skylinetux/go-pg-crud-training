@@ -63,6 +63,7 @@ version   4.5.17    True        False         8d      Cluster version is 4.5.17
 В **Grafana** будем создавать дашборды для визуализации метрик.
 **Alertmanager** работает в качестве системы оповещения. Получая события из Prometheus, обрабытывая их, Alertmanager будет передавать данные в Alertmanager-bot.
 **Alertmanager-bot** система отправки оповещений в Telegram. Сам проект доступен в [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot).
+**Метрики приложения** доступны по 
 
 **Цель:** получить работающую систему мониторинга с оповещениями пользователей.
 
@@ -96,20 +97,106 @@ cluster-reader-0  ClusterRole/cluster-reader    2d7h    training-monitoring/metr
 view    ClusterRole/view    2d7h    training-monitoring/metricsexporter
 ```
 
-Далее необходимо создать deploymentconfig, в котором будет запущен образ prometheus server, и конфигурационные файлы prometheus.yml,go-pg-crud-rules.yaml.
-
-```yaml
-
-```
-
-
-
-
 ## Prometheus server
 
 **Prometheus server** центральный компонент системы мониторинга. Его задача хранение и получение обьектов мониторинга - метрик. Он использует базу данных TSDB (time series database) и хранит данные в виде временных рядов — наборов значений, соотнесённых с временной меткой (timestamp). Более подробно о TSDB и как работает Prometheus можно ознакомиться [на habr](https://habr.com/ru/company/southbridge/blog/455290/) и [на официальном сайте](https://prometheus.io/docs/prometheus/latest/storage/).
 
-Для 
+Для запуска prometheus server создать deploymentconfig, в котором будет запущен образ docker.io/prom/prometheus:latest, и конфигурационные файлы:
+* prometheus.yml - основной файл конфигурации prometheus server
+* go-pg-crud-rules.yaml - файл настройки правил
+
+**prometheus.yml**
+
+```yaml
+# глобальные параметры
+global:
+  scrape_interval:     15s # частота сборки метрик
+  evaluation_interval: 15s # частота оценки\проверки правил
+
+# путь для правил
+rule_files:
+  - /etc/prometheus/rules/*.yaml
+
+# блок настройки сборщиков метрик
+scrape_configs:
+  - job_name: go-pg-crud # имя job для сборки метрик
+    static_configs:
+      - targets: ['go-pg-crud.go-pg-crud.svc:80'] # адрес приложения по которому доступны метрики, по умолчанию добавляется /metrics к url
+
+# блок настройки взаимодействия с Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+      - targets:
+        - alertmanager:9093 # адрес alertmanager, куда prometheus будет отправлять события
+```
+
+**go-pg-crud-rules.yaml**
+
+```yaml
+groups:
+  - name: go-pg-crud # имя группы парвил
+    rules:
+      - alert: HighGoroutine # имя alert
+        expr: go_goroutines{job="go-pg-crud"} > 100 # собственно правило
+        for: 1m # интервал срабатывания, т.е. в течении 1 минуты правило становится активным (FIRING)
+        labels: # метки
+          severity: page
+        annotations: # описание правила и сообщения при срабатывании
+          summary: High goroutine!
+          message: Check server load
+
+```
+
+Важно отметить, что адрес сервиса alertmanager:9093 указан по имени service, и аналогично go-pg-crud.go-pg-crud.svc:80 - serivce с именем go-pg-crud в namespace go-pg-crud. Доступ к service в других namespace мы предоставили выше для учётной записи metricsexporter. Обращение через service в нашем случае удобнее - мы собираем метрики внутри сети OpenShift, но возможен и вариант указания route необходимых сервисов, но тогда обращения к метрикам будут дополнительно проходить через балансировщик OpenShift, что не совсем рационально, но для сервисов вне OpenShift такой вариант является основным.
+
+Также создаём route и service для доступа к prometheus server. 
+
+```console
+# переходим в директорию namespace
+$ cd prometheus
+# с помощью kustomize генерируем конфигурацию и применяем
+$ kustomize build . | oc apply -f -
+configmap/prometheus-config created
+configmap/prometheus-rules created
+service/prometheus created
+deploymentconfig.apps.openshift.io/prometheus created
+route.route.openshift.io/prometheus created
+# проверяем наличе запущенных pod
+$ oc get pod
+NAME                  READY   STATUS              RESTARTS   AGE
+prometheus-1-deploy   1/1     Running             0          4s
+prometheus-1-pm2tn    0/1     ContainerCreating   0          2s
+# проверяем создание configmaps
+$ oc get cm
+NAME                DATA   AGE
+prometheus-config   1      13m
+prometheus-rules    1      13m
+# проверяем создание route
+$ oc get route
+NAME         HOST/PORT                                                    PATH   SERVICES     PORT   TERMINATION   WILDCARD
+prometheus   prometheus-training-monitoring.apps.ocp-test.<domain_name>         prometheus   9090                 None
+# проверяем создание service
+$ oc get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+prometheus   ClusterIP   172.30.136.92   <none>        9090/TCP   13m
+```
+
+Сервис prometheus будет доступен по адресу http://prometheus-training-monitoring.apps.ocp-test.<domain_name>
+
+## Grafana
+
+**Grafana** - это платформа с открытым исходным кодом для визуализации, мониторинга и анализа данных. 
+
+Для запуска grafana необходимо также создать deploymentconfig, в котором будет запущен образ docker.io/grafana/grafana, и конфигурационные файлы:
+* grafana.ini
+* go-pg-crud_dashboard.json
+* dashboards.yaml
+* datasources.yaml
+
+
+
+
 
 
 
