@@ -148,7 +148,7 @@ groups:
 
 Важно отметить, что адрес сервиса alertmanager:9093 указан по имени service, и аналогично go-pg-crud.go-pg-crud.svc:80 - serivce с именем go-pg-crud в namespace go-pg-crud. Доступ к service в других namespace мы предоставили выше для учётной записи metricsexporter. Обращение через service в нашем случае удобнее - мы собираем метрики внутри сети OpenShift, но возможен и вариант указания route необходимых сервисов, но тогда обращения к метрикам будут дополнительно проходить через балансировщик OpenShift, что не совсем рационально, но для сервисов вне OpenShift такой вариант является основным.
 
-Также создаём route и service для доступа к prometheus server. 
+Также создаём route и service для доступа к prometheus server. Полностью создание prometheus service в OpenShift будет выглядеть следующим образом.
 
 ```console
 # переходим в директорию namespace
@@ -249,11 +249,99 @@ http_port = 3000 # grafana будет запущена на 3000 порту
 }
 ```
 
-**go-pg-crud_dashboard.json** приводить не буду, подробное описание можно посмотреть на [сайте grafana](https://grafana.com/grafana/dashboards/6671)
+**go-pg-crud_dashboard.json** приводить не буду, т.к. подробное описание можно посмотреть на [сайте grafana](https://grafana.com/grafana/dashboards/6671)
 
+```console
+# переходим в директорию grafana
+$ cd grafana
+# с помощью kustomize генерируем конфигурацию и применяем
+$ kustomize build . | oc apply -f -
+configmap/grafana-config created
+configmap/grafana-dashboard-go-pg-crud created
+configmap/grafana-dashboards created
+configmap/grafana-datasources created
+service/grafana created
+deploymentconfig.apps.openshift.io/grafana created
+route.route.openshift.io/grafana created
+# проверяем наличе запущенных pod
+$ oc get pod
+NAME                  READY   STATUS              RESTARTS   AGE
+grafana-1-deploy      1/1     Running             0          4s
+grafana-1-pdjwh       0/1     ContainerCreating   0          1s
+prometheus-1-deploy   0/1     Completed           0          53m
+prometheus-1-pm2tn    1/1     Running             0          53m
+# проверяем создание configmaps
+$ oc get cm | grep grafana
+grafana-config                 1      30m
+grafana-dashboard-go-pg-crud   1      30m
+grafana-dashboards             1      30m
+grafana-datasources            1      30m
+# проверяем создание route
+$ oc get route | grep grafana
+grafana      grafana-training-monitoring.apps.ocp-test.neoflex.local             grafana      3000                 None
+# проверяем создание service
+$ oc get service | grep grafana
+grafana      ClusterIP   172.30.101.198   <none>        3000/TCP   31m
 
+```
 
+Сервис grafana будет доступен по адресу http://grafana-training-monitoring.apps.ocp-test.<domain_name>
 
+## Alertmanager
+
+**Alertmanager** - это инструмент для обработки оповещений, который устраняет дубликаты, группирует и отправляет оповещения соответствующему получателю.
+
+Для запуска alertmanager необходимо создать deploymentconfig, в котором будет запущен образ docker.io/prom/alertmanager, и конфигурационные файлы:
+* alertmanager.yml - основной файл конфигурации alertmanager
+
+**alertmanager.yml**
+
+```yaml
+# блок глобальных переменных
+global:
+  resolve_timeout: 5m # если событие тригера не было обновлено в течении 5 минут, то оно считается неактуальным
+
+# блок настройки оповещений
+route:
+  group_by: ['alertname'] # груповать по label
+  group_wait: 10s # ожидание перед отправкой оповещений
+  group_interval: 10s # промежуток времени перед отправками оповещений
+  repeat_interval: 120s # интервал повтора оповещения
+  receiver: 'alertmananger-bot' # куда и как отправлять, блок ниже
+receivers: # куда и как отправлять
+- name: 'alertmananger-bot'
+  webhook_configs: # используется webhook
+  - send_resolved: true # отправлять уведомления со статусом resolved
+    url: 'http://alertmanager-bot:8080' # отравляем оповещения в приложение, работающее с ботом telegram
+```
+
+Применяем конфигурацию:
+
+```console
+# переходим в директорию alertmanager
+$ cd alertmanager
+# с помощью kustomize генерируем конфигурацию и применяем
+$ kustomize build . | oc apply -f -
+configmap/alertmanager-config created
+service/alertmanager created
+deploymentconfig.apps.openshift.io/alertmanager created
+route.route.openshift.io/alertmanager created
+# проверяем наличе запущенных pod
+$ oc get pod | grep alertmanager
+alertmanager-1-c4wvr    1/1     Running     0          38s
+alertmanager-1-deploy   0/1     Completed   0          41s
+# проверяем создание configmaps
+$ oc get cm | grep alertmanager
+alertmanager-config            1      50s
+# проверяем создание route
+$ oc get route | grep alertmanager
+alertmanager   alertmanager-training-monitoring.apps.ocp-test.<domain_name>          alertmanager   9093                 None
+$ проверяем создание service
+# oc get svc | grep alertmanager
+alertmanager   ClusterIP   172.30.98.31     <none>        9093/TCP   57s
+```
+
+Сервис alertmanager будет доступен по адресу http://alertmanager-training-monitoring.apps.ocp-test.<domain_name>
 
 
 
