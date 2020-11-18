@@ -344,173 +344,31 @@ alertmanager   ClusterIP   172.30.98.31     <none>        9093/TCP   57s
 Сервис alertmanager будет доступен по адресу http://alertmanager-training-monitoring.apps.ocp-test.<domain_name>
 
 
+## Alertmanager-bot
 
+**Alertmanager-bot** - это сервис для отправки оповещений из alertmanager в telegram. Сайт проекта [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Готовим yaml манифесты для деплоя в OpenShift:
-
-Для управления yaml манифестами будем использовать утилиту kustomize. Нам при сборке обновлённого проекта необходимо менять тег docker образа, т.к. в pipeline мы при каждой сборке приложения сохраняем id коммита в качестве тега образа. Подробнее про [https://kustomize.io/](https://kustomize.io/) .
-
-![](/ci_cd/images/img_8.png)
-
-*kustomization.yaml*:
-
-```yaml
-resources:
-- 01-deploymentconfig.yaml
-- 02-service.yaml
-- 03-route.yaml
-```
-
-exclamation Один из вариантов сформировать deploymentconfig, service и route - развернуть приложение в OpenShift и выгрузить yaml через **oc get _ресурс_ --export**
-
-*01-deploymentconfig.yaml*:
-
-```yaml
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
-metadata:
-name: go-pg-crud
-spec:
-replicas: 1
-revisionHistoryLimit: 10
-selector:
-app: go-pg-crud
-strategy:
-template:
-metadata:
-labels:
-app: go-pg-crud
-spec:
-containers:
-- image: openshift-infra.test.<domain_name>:5000/go-pg-crud/go-pg-crud:latest
-imagePullPolicy: Always
-name: go-pg-crud
-ports:
-- containerPort: 8888
-protocol: TCP
-resources: {}
-terminationMessagePath: /dev/termination-log
-terminationMessagePolicy: File
-dnsPolicy: ClusterFirst
-restartPolicy: Always
-schedulerName: default-scheduler
-securityContext: {}
-terminationGracePeriodSeconds: 30
-```
-
-*02-service.yaml*:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-name: go-pg-crud
-spec:
-clusterIP: 172.30.115.42
-ports:
-- port: 80
-protocol: TCP
-targetPort: 8080
-selector:
-app: go-pg-crud
-sessionAffinity: None
-type: ClusterIP
-```
-
-*03-route.yaml*:
-
-```yaml
-apiVersion: v1
-items:
-- apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-annotations:
-openshift.io/host.generated: "true"
-name: go-pg-crud
-spec:
-host: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>
-port:
-targetPort: 8080
-to:
-kind: Service
-name: go-pg-crud
-weight: 100
-wildcardPolicy: None
-kind: List
-```
-
-На этапе сборки приложения(Create manifest) будем выполнять **kustomize edit set image**, где будем менять тег образа и **kustomize build** для формирования итогового манифеста.
-
-#### Запускаем pipeline и проверяем
-
-Все наши именения переносим в git и проверяем работу pipeline
+Для запуска alertmanager необходимо создать deploymentconfig и secrets, для хранения пользователя администратора бота и id бота в telegram.
 
 ```console
-$ git add .
-$ git commit -m 'Update project'
-$ git push
+# переходим в директорию alertmanager-bot
+$ cd alertmanager-bot
+# с помощью kustomize генерируем конфигурацию и применяем
+$ kustomize build . | oc apply -f -
+secret/alertmanager-bot created
+service/alertmanager-bot created
+deploymentconfig.apps.openshift.io/alertmanager-bot created
+# проверяем наличе запущенных pod
+oc get pod | grep alertmanager-bot
+alertmanager-bot-1-deploy   0/1     Completed   0          53s
+alertmanager-bot-1-zshl6    1/1     Running     0          50s
+# проверяем создание secrets
+$ oc get secrets | grep alertmanager-bot
+alertmanager-bot                  Opaque                                2      73s
+# проверяем создание service
+$ oc get svc | grep alertmanager-bot
+alertmanager-bot   ClusterIP   172.30.3.92      <none>        8080/TCP   88s
 ```
 
-В Gitlab CI должен запуститься pipeline:
-
-![](/ci_cd/images/img_10.png)
 
 
-После успешного выполения pipeline проверяем ресурсы в OpenShift:
-
-```console
-# получаем список pod в проекте go-pg-crud
-$ oc get pod -n go-pg-crud
-NAME READY STATUS RESTARTS AGE
-go-pg-crud-1-deploy 0/1 Completed 0 15h
-go-pg-crud-1-4v2rj 1/1 Running 0 14h
-
-# получаем список service в проекте go-pg-crud
-$ oc get svc -n go-pg-crud
-NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
-go-pg-crud ClusterIP 172.30.115.42 <none> 80/TCP 15h
-
-# получаем список route в проекте go-pg-crud
-$ oc get route -n go-pg-crud
-NAME HOST/PORT PATH SERVICES PORT TERMINATION WILDCARD
-go-pg-crud go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name> go-pg-crud 8080 None
-```
-
-Приложение будет доступно по ссылке [http://go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>](http://go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>)
