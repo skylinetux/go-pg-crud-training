@@ -4,7 +4,7 @@
 
 ## Обзор окружения
 
-Для организации примера мониторинга приложения развёрнуто тоже окружение что и в [примере с CI\\CD](https://github.com/skylinetux/neoflex_training/tree/master/ci_cd). В данном случае нам понадобится только **кластер OpenShift** и [приложение](https://github.com/skylinetux/neoflex_training/tree/master/ci_cd/application) которое будем заводить в мониторинг, и конечно же хост, с которого будем производить установку и настройку стека мониторинга.
+Для организации примера мониторинга приложения развёрнуто тоже окружение, что и в [примере с CI\\CD](https://github.com/skylinetux/neoflex_training/tree/master/ci_cd). В данном случае нам понадобится **кластер OpenShift**, [приложение](https://github.com/skylinetux/neoflex_training/tree/master/ci_cd/application) которое будем заводить в мониторинг, и хост **openshift-build**, которого будем производить установку и настройку стека мониторинга.
 
 * Кластер **OpenShift**
 * ВМ **openshift-infra**
@@ -59,11 +59,26 @@ version   4.5.17    True        False         8d      Cluster version is 4.5.17
 
 ![](/monitoring/images/img_1.png)
 
-**Prometheus** выступает в роли хранилища метрик, которые мы будем получать из приложения. Также в Promethes будем генерировать события для Alertmanager.
+**Prometheus server** выступает в роли хранилища метрик, которые мы будем получать из приложения. Также в Promethes server будем генерировать события для Alertmanager.
 В **Grafana** будем создавать дашборды для визуализации метрик.
 **Alertmanager** работает в качестве системы оповещения. Получая события из Prometheus, обрабытывая их, Alertmanager будет передавать данные в Alertmanager-bot.
-**Alertmanager-bot** система отправки оповещений в Telegram. Сам проект доступен в [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot).
-**Метрики приложения** доступны по 
+**Alertmanager-bot** система отправки оповещений в Telegram. Проект и описание доступны по сслыке [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot).
+**Метрики приложения** доступны по ссылке http://go-pg-crud.go-pg-crud.svc:80/metrics. Для этого в само приложение добавлен [экспортёр для golang](https://prometheus.io/docs/guides/go-application/):
+
+```golang
+...
+import (
+...
+        "github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+func main() {
+...
+         servermain.Handle("/metrics", promhttp.Handler())
+
+...
+}
+````
 
 **Цель:** получить работающую систему мониторинга с оповещениями пользователей.
 
