@@ -19,7 +19,7 @@
   - docker
   - go
 
-![](ci_cd/images/img_1.png)
+![](/ci_cd/images/img_1.png)
 
 #### **ВМ bastion**
 
