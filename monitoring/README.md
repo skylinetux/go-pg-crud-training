@@ -14,6 +14,7 @@
   - vi\\vim
   - oc
   - kustomize
+  - docker
 
 #### ВМ **openshift-infra**
 
@@ -51,6 +52,7 @@ version   4.5.17    True        False         8d      Cluster version is 4.5.17
 
 * yum -y install git vim go
 * https://kubectl.docs.kubernetes.io/installation/kustomize/
+* https://docs.docker.com/engine/install/centos/
 
 
 ## Общая схема работы мониторинга
@@ -404,12 +406,78 @@ Available commands:
 
 
 
-#### Проверка
+#### Проверка работы системы мониторинга и оповещенийлк
 
 После запуска всех сервисов убеждаемся что pod в статусе Running и доступны Prometheus server, Grafana, Alertmanager веб-интерфейсы:
 *  http://prometheus-training-monitoring.apps.ocp-test.<domain_name>
 *  http://grafana-training-monitoring.apps.ocp-test.<domain_name>
 *  http://alertmanager-training-monitoring.apps.ocp-test.<domain_name>
 
-Также необходимо убедиться что метрики корректно собираются и отображаются. Проверяем раздел Status -> Targets в Prometheus, и dashboard в Grafana.
+Также необходимо убедиться что метрики корректно собираются и отображаются. Проверяем раздел **Status -> Targets** в Prometheus, и dashboard в Grafana.
+
+## Генерируем нагрузку
+
+Для генерации нагрузки будем использовать [yandex-tank](https://github.com/yandex/yandex-tank). Запускаем как и рекомендовано в docker:
+
+```console
+$ docker run --entrypoint /bin/bash -v $(pwd):/var/loadtest -v $HOME/.ssh:/root/.ssh --net host -it direvius/yandex-tank
+```
+
+Для генерации нагрузки создаём файл load.yaml:
+
+```yaml
+phantom:
+  address: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local:80 # [Target's address]:[target's port]
+  writelog: all
+  uris: # список url которые будем дёргать
+    - /index.html
+    - /book.html?id=10
+    - /book.html?id=11
+    - /book.html?id=12
+  load_profile:
+    load_type: rps # schedule load by defining requests per second
+    schedule: const(1000, 10m) # starting from 1rps growing linearly to 10rps during 10 minutes
+  headers: # обязательно надо указать в заголовках хостнейм сервиса, к которому будем обращаться
+    - "[Host: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>]"
+    - "[Connection: close]"
+console:
+  enabled: true # enable console output
+telegraf:
+  enabled: false # let's disable telegraf monitoring for the first time
+```
+
+и запускаем нагрузку:
+
+```console
+# yandex-tank -c load.yml
+```
+
+Из-за большого количества обращений к сервису go-pg-crud возрастёт количество потоков goroutine, на которые у нас в Prometheus server настроено правило:
+
+```
+...
+            expr: go_goroutines{job="go-pg-crud"} > 100
+...
+```
+
+В результате Prometheus Server сгенерирует событие и отправит его в Alertmanager, а Alertmanager уже отправит сгенерированное событие в Alertmanager-bot. В результате в Telegram будет получено сообщение вида:
+
+```
+🔥 FIRING 🔥
+HighGoroutine
+Check server load!
+Duration: 6 minutes 30 seconds
+```
+
+и по завершении нагрузки:
+
+```
+RESOLVED
+HighGoroutine
+Check server load!
+Duration: 3 minutes 30 seconds
+Ended: 5 seconds
+```
+
+
 
