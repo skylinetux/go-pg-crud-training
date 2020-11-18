@@ -15,8 +15,6 @@
   - oc
   - kustomize
 
-![](/ci_cd/images/img_1.png)
-
 #### ВМ **openshift-infra**
 
 **Роль:** Запущены сервисы Gitlab CI, Nexus, Postgres. В данном примере используется только БД Postgres для корректной работы [приложения](https://github.com/skylinetux/neoflex_training/tree/master/ci_cd/application).
@@ -189,10 +187,91 @@ prometheus   ClusterIP   172.30.136.92   <none>        9090/TCP   13m
 **Grafana** - это платформа с открытым исходным кодом для визуализации, мониторинга и анализа данных. 
 
 Для запуска grafana необходимо также создать deploymentconfig, в котором будет запущен образ docker.io/grafana/grafana, и конфигурационные файлы:
-* grafana.ini
-* go-pg-crud_dashboard.json
-* dashboards.yaml
-* datasources.yaml
+* grafana.ini - основной файл конфигурации grafana
+* go-pg-crud_dashboard.json - заранее подготовленный дашборд для мониторинга приложения на golang, за основу взят [dashboard с сайта grafana](https://grafana.com/grafana/dashboards/6671)
+* dashboards.yaml - верхнеуровневый dashboard, в котором указываем путь для других dashboard
+* datasources.yaml - файл конфигурации подключений к prometheus server или другому источнику данных
+
+**grafana.ini**
+
+```yaml
+[auth.basic]
+enabled = false # отключаем basic аутентификацию
+
+[auth.anonymous]
+enabled = true # разрешаем anonymous доступ к интерфейсу grafana и задаём по умолчанию организацию и роль
+org_name = Main Org.
+org_role = Viewer
+
+# блок описания путей для хранения данных, логов, плагинов и т.д. в grafana
+[paths]
+data = /var/lib/grafana
+logs = /var/lib/grafana/logs
+plugins = /var/lib/grafana/plugins
+provisioning = /etc/grafana/provisioning
+
+[server]
+http_port = 3000 # grafana будет запущена на 3000 порту
+```
+
+**dashboards.yaml**
+
+```json
+{
+    "apiVersion": 1,
+    "providers": [
+        {
+            "folder": "",
+            "name": "0",
+            "options": { # путь хранения дашбордов, которые будут использоваться как дочерние
+                "path": "/grafana-dashboard-definitions/"
+            },
+            "orgId": 1,
+            "type": "file"
+        }
+    ]
+}
+```
+
+**datasources.yaml**
+
+```json
+{
+    "apiVersion": 1,
+    "datasources": [
+        {
+            "access": "proxy",
+            "name": "prometheus",
+            "type": "prometheus",
+            "url": "http://prometheus:9090", # адрес service prometheus
+        }
+    ]
+}
+```
+
+**go-pg-crud_dashboard.json** приводить не буду, подробное описание можно посмотреть на [сайте grafana](https://grafana.com/grafana/dashboards/6671)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
