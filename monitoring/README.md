@@ -80,7 +80,7 @@ func main() {
 }
 ````
 
-**Цель:** получить работающую систему мониторинга с оповещениями пользователей.
+**Цель проекта:** получить работающую систему мониторинга с оповещениями пользователей.
 
 ## Подготовка окружения для в OpenShift
 
@@ -93,12 +93,14 @@ func main() {
 ```console
 # переходим в директорию namespace
 $ cd namespace
+
 # с помощью kustomize генерируем конфигурацию и применяем
 $ kustomize build . | oc apply -f -
 namespace/training-monitoring created
 serviceaccount/metricsexporter created
 clusterrolebinding.rbac.authorization.k8s.io/cluster-reader-0 unchanged
 clusterrolebinding.rbac.authorization.k8s.io/view unchanged
+
 # проверяем наличие учётной записи metricsexporter в namespace training-monitoring
 $ oc get sa -n training-monitoring
 NAME              SECRETS   AGE
@@ -106,6 +108,7 @@ builder           2         50s
 default           2         50s
 deployer          2         50s
 metricsexporter   2         50s
+
 # проверяем наличие ролей для учётной записи training-monitoring
 $ oc get clusterrolebinding -o wide | grep metricsexporter
 cluster-reader-0  ClusterRole/cluster-reader    2d7h    training-monitoring/metricsexporter
@@ -170,6 +173,7 @@ groups:
 ```console
 # переходим в директорию namespace
 $ cd prometheus
+
 # с помощью kustomize генерируем конфигурацию и применяем
 $ kustomize build . | oc apply -f -
 configmap/prometheus-config created
@@ -177,20 +181,24 @@ configmap/prometheus-rules created
 service/prometheus created
 deploymentconfig.apps.openshift.io/prometheus created
 route.route.openshift.io/prometheus created
+
 # проверяем наличе запущенных pod
 $ oc get pod
 NAME                  READY   STATUS              RESTARTS   AGE
 prometheus-1-deploy   1/1     Running             0          4s
 prometheus-1-pm2tn    0/1     ContainerCreating   0          2s
+
 # проверяем создание configmaps
 $ oc get cm
 NAME                DATA   AGE
 prometheus-config   1      13m
 prometheus-rules    1      13m
+
 # проверяем создание route
 $ oc get route
 NAME         HOST/PORT                                                    PATH   SERVICES     PORT   TERMINATION   WILDCARD
 prometheus   prometheus-training-monitoring.apps.ocp-test.<domain_name>         prometheus   9090                 None
+
 # проверяем создание service
 $ oc get svc
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
@@ -271,6 +279,7 @@ http_port = 3000 # grafana будет запущена на 3000 порту
 ```console
 # переходим в директорию grafana
 $ cd grafana
+
 # с помощью kustomize генерируем конфигурацию и применяем
 $ kustomize build . | oc apply -f -
 configmap/grafana-config created
@@ -280,6 +289,7 @@ configmap/grafana-datasources created
 service/grafana created
 deploymentconfig.apps.openshift.io/grafana created
 route.route.openshift.io/grafana created
+
 # проверяем наличе запущенных pod
 $ oc get pod
 NAME                  READY   STATUS              RESTARTS   AGE
@@ -287,15 +297,18 @@ grafana-1-deploy      1/1     Running             0          4s
 grafana-1-pdjwh       0/1     ContainerCreating   0          1s
 prometheus-1-deploy   0/1     Completed           0          53m
 prometheus-1-pm2tn    1/1     Running             0          53m
+
 # проверяем создание configmaps
 $ oc get cm | grep grafana
 grafana-config                 1      30m
 grafana-dashboard-go-pg-crud   1      30m
 grafana-dashboards             1      30m
 grafana-datasources            1      30m
+
 # проверяем создание route
 $ oc get route | grep grafana
 grafana      grafana-training-monitoring.apps.ocp-test.neoflex.local             grafana      3000                 None
+
 # проверяем создание service
 $ oc get service | grep grafana
 grafana      ClusterIP   172.30.101.198   <none>        3000/TCP   31m
@@ -337,24 +350,29 @@ receivers: # куда и как отправлять
 ```console
 # переходим в директорию alertmanager
 $ cd alertmanager
+
 # с помощью kustomize генерируем конфигурацию и применяем
 $ kustomize build . | oc apply -f -
 configmap/alertmanager-config created
 service/alertmanager created
 deploymentconfig.apps.openshift.io/alertmanager created
 route.route.openshift.io/alertmanager created
+
 # проверяем наличе запущенных pod
 $ oc get pod | grep alertmanager
 alertmanager-1-c4wvr    1/1     Running     0          38s
 alertmanager-1-deploy   0/1     Completed   0          41s
+
 # проверяем создание configmaps
 $ oc get cm | grep alertmanager
 alertmanager-config            1      50s
+
 # проверяем создание route
 $ oc get route | grep alertmanager
 alertmanager   alertmanager-training-monitoring.apps.ocp-test.<domain_name>          alertmanager   9093                 None
-$ проверяем создание service
-# oc get svc | grep alertmanager
+
+# проверяем создание service
+$ oc get svc | grep alertmanager
 alertmanager   ClusterIP   172.30.98.31     <none>        9093/TCP   57s
 ```
 
@@ -383,18 +401,22 @@ MTIzNDUK
 ```console
 # переходим в директорию alertmanager-bot
 $ cd alertmanager-bot
+
 # с помощью kustomize генерируем конфигурацию и применяем
 $ kustomize build . | oc apply -f -
 secret/alertmanager-bot created
 service/alertmanager-bot created
 deploymentconfig.apps.openshift.io/alertmanager-bot created
+
 # проверяем наличе запущенных pod
 oc get pod | grep alertmanager-bot
 alertmanager-bot-1-deploy   0/1     Completed   0          53s
 alertmanager-bot-1-zshl6    1/1     Running     0          50s
+
 # проверяем создание secrets
 $ oc get secrets | grep alertmanager-bot
 alertmanager-bot                  Opaque                                2      73s
+
 # проверяем создание service
 $ oc get svc | grep alertmanager-bot
 alertmanager-bot   ClusterIP   172.30.3.92      <none>        8080/TCP   88s
