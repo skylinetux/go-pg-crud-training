@@ -59,11 +59,11 @@ version   4.5.17    True        False         8d      Cluster version is 4.5.17
 
 ![](/monitoring/images/img_1.png)
 
-**Prometheus server** выступает в роли хранилища метрик, которые мы будем получать из приложения. Также в Promethes server будем генерировать события для Alertmanager.
-В **Grafana** будем создавать дашборды для визуализации метрик.
-**Alertmanager** работает в качестве системы оповещения. Получая события из Prometheus, обрабытывая их, Alertmanager будет передавать данные в Alertmanager-bot.
-**Alertmanager-bot** система отправки оповещений в Telegram. Проект и описание доступны по сслыке [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot).
-**Метрики приложения** доступны по ссылке http://go-pg-crud.go-pg-crud.svc:80/metrics. Для этого в само приложение добавлен [экспортёр для golang](https://prometheus.io/docs/guides/go-application/):
+* **Prometheus server** выступает в роли хранилища метрик, которые мы будем получать из приложения. Также в Promethes server будем генерировать события для Alertmanager.
+* В **Grafana** будем создавать дашборды для визуализации метрик.
+* **Alertmanager** работает в качестве системы оповещения. Получая события из Prometheus, обрабытывая их, Alertmanager будет передавать данные в Alertmanager-bot.
+* **Alertmanager-bot** система отправки оповещений в Telegram. Проект и описание доступны по сслыке [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot).
+* **Метрики приложения** доступны по ссылке http://go-pg-crud.go-pg-crud.svc:80/metrics. Для этого в само приложение добавлен [экспортёр для golang](https://prometheus.io/docs/guides/go-application/):
 
 ```golang
 ...
