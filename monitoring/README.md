@@ -28,11 +28,11 @@
 # получить список нод и их статус
 $ oc get nodes
 NAME                              STATUS   ROLES            AGE   VERSION
-master-0.ocp-test.neoflex.local   Ready    master,worker    68d   v1.18.3+45b9524
-master-1.ocp-test.neoflex.local   Ready    master,worker    68d   v1.18.3+45b9524
-master-2.ocp-test.neoflex.local   Ready    master,worker    68d   v1.18.3+45b9524
-worker-0.ocp-test.neoflex.local   Ready    compute,worker   68d   v1.18.3+45b9524
-worker-1.ocp-test.neoflex.local   Ready    compute,worker   68d   v1.18.3+45b9524
+master-0.ocp-test.<domain_name>   Ready    master,worker    68d   v1.18.3+45b9524
+master-1.ocp-test.<domain_name>   Ready    master,worker    68d   v1.18.3+45b9524
+master-2.ocp-test.<domain_name>   Ready    master,worker    68d   v1.18.3+45b9524
+worker-0.ocp-test.<domain_name>   Ready    compute,worker   68d   v1.18.3+45b9524
+worker-1.ocp-test.<domain_name>   Ready    compute,worker   68d   v1.18.3+45b9524
 
 # получить версию кластера
 $ oc get clusterversion
@@ -307,7 +307,7 @@ grafana-datasources            1      30m
 
 # проверяем создание route
 $ oc get route | grep grafana
-grafana      grafana-training-monitoring.apps.ocp-test.neoflex.local             grafana      3000                 None
+grafana      grafana-training-monitoring.apps.ocp-test.<domain_name>             grafana      3000                 None
 
 # проверяем создание service
 $ oc get service | grep grafana
@@ -464,7 +464,7 @@ $ docker run --entrypoint /bin/bash -v $(pwd):/var/loadtest -v $HOME/.ssh:/root/
 
 ```yaml
 phantom:
-  address: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local:80 # [Target's address]:[target's port]
+  address: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>:80 # [Target's address]:[target's port]
   writelog: all
   uris: # список url которые будем дёргать
     - /index.html
