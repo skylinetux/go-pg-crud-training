@@ -1,0 +1,8 @@
+resources:
+- 01-grafana-config-cm.yaml
+- 02-grafana-dashboard-go-pg-crud-cm.yaml
+- 03-grafana-dashboards-cm.yaml
+- 04-grafana-datasources-cm.yaml
+- 05-grafana-dc.yaml
+- 06-grafana-svc.yaml
+- 07-grafana-route.yaml

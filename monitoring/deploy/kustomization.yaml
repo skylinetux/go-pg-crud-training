@@ -1,0 +1,7 @@
+resources:
+- namespace
+- alertmanager
+- alertmanager-bot
+- grafana
+- prometheus
+namespace: training-monitoring

@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    training-monitoring: "true"
+  name: alertmanager
+spec:
+  host: alertmanager-training-monitoring.apps.ocp-test.<domain_name>
+  port:
+    targetPort: 9093
+  to:
+    kind: Service
+    name: alertmanager
+    weight: 100
+  wildcardPolicy: None

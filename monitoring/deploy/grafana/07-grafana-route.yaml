@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: grafana
+  labels:
+    training-monitoring: "true"
+spec:
+  host: grafana-training-monitoring.apps.ocp-test.<domain_name>
+  port:
+    targetPort: 3000
+  to:
+    kind: Service
+    name: grafana
+    weight: 100
+  wildcardPolicy: None

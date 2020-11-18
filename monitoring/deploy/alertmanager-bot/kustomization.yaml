@@ -1,0 +1,4 @@
+resources:
+- 01-alertmanager-bot-secrets.yml
+- 02-alertmanager-bot-dc.yml
+- 03-alertmanager-bot-svc.yaml

@@ -1,0 +1,5 @@
+resources:
+- 00-create-ns.yaml
+- 01-metricsexporter_sa.yaml
+- 02-role-cluster-reader.yaml
+- 03-role-view.yaml

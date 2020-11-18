@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+  alertmanager.yml: |-
+    global:
+      resolve_timeout: 5m
+
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 120s
+      receiver: 'alertmananger-bot'
+    receivers:
+    - name: 'alertmananger-bot'
+      webhook_configs:
+      - send_resolved: true
+        url: 'http://alertmanager-bot:8080'
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'dev', 'instance']
+kind: ConfigMap
+metadata:
+  name: alermanager-config
+  labels:
+    training-monitoring: 'true'
+

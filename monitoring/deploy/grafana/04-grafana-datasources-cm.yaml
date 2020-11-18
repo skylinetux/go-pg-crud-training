@@ -1,0 +1,20 @@
+apiVersion: v1
+data:
+  datasources.yaml: |-
+    {
+        "apiVersion": 1,
+        "datasources": [
+            {
+                "access": "proxy",
+                "name": "prometheus",
+                "type": "prometheus",
+                "url": "http://prometheus:9090",
+            }
+        ]
+    }
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  labels:
+    training-monitoring: 'true'
+

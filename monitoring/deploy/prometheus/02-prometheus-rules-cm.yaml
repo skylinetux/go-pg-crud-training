@@ -1,0 +1,20 @@
+apiVersion: v1
+data:
+  go-pg-crud-rules.yaml: |-
+    groups:
+      - name: go-pg-crud
+        rules:
+          - alert: HighGoroutine
+            expr: go_goroutines{job="go-pg-crud"} > 100
+            for: 1m
+            labels:
+              severity: page
+            annotations:
+              summary: High goroutine!
+              message: Check server load!
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  labels:
+    training-monitoring: 'true'
+

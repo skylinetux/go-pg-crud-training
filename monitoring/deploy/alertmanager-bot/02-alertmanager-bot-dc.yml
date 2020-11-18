@@ -1,0 +1,73 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: alertmanager-bot
+  namespace: prometheus
+  labels:
+    training-monitoring: 'true'
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    app: alermanager-bot
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: alermanager-bot
+    spec:
+      containers:
+      - args:
+        - --alertmanager.url=http://alertmanager:9093
+        - --log.level=info
+        - --store=bolt
+        - --bolt.path=/data/bot.db
+        env:
+        - name: TELEGRAM_ADMIN
+          valueFrom:
+            secretKeyRef:
+              key: admin
+              name: alertmanager-bot
+        - name: TELEGRAM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: token
+              name: alertmanager-bot
+        image: metalmatze/alertmanager-bot:0.4.2
+        imagePullPolicy: IfNotPresent
+        name: alertmanager-bot
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 25m
+            memory: 64Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: data
+  test: false
+  triggers:
+  - type: ConfigChange

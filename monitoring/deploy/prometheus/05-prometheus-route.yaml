@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    training-monitoring: "true"
+  name: prometheus
+spec:
+  host: prometheus-training-monitoring.apps.ocp-test.<domain_name>
+  port:
+    targetPort: 9090
+  to:
+    kind: Service
+    name: prometheus
+    weight: 100
+  wildcardPolicy: None

@@ -1,0 +1,6 @@
+resources:
+- 01-prometheus-config-cm.yaml
+- 02-prometheus-rules-cm.yaml
+- 03-prometheus-dc.yaml
+- 04-prometheus-svc.yaml
+- 05-prometheus-route.yaml
