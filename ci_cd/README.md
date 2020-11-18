@@ -19,7 +19,7 @@
   - docker
   - go
 
-![](/images/img_1.png)
+![](ci_cd/images/img_1.png)
 
 #### **ВМ bastion**
 
@@ -117,15 +117,15 @@ token: eyJhbGciOiJSUzI1...
 
 Nexus используется как docker registry. Создан docker репозиторий, доступный на порту 5000:
 
-![](/images/img_2.png)
+![](ci_cd/images/img_2.png)
 
 Также добавлен пользователь gitlab c правами nx-admin(точно также как с RBAC, нет времени, лей на прод):
 
-![](/images/img_3.png)
+![](ci_cd/images/img_3.png)
 
 И разрешён логин в nexus по Docker Bearer Token:
 
-![](/images/img_4.png)
+![](ci_cd/images/img_4.png)
 
 #### Gitlab CI
 
@@ -135,7 +135,7 @@ Gitlab CI как основной инструмент для CI\\CD. Также
 
 В Gitlab CI создан репозиторий, в котором загружен код проекта:
 
-![](/images/img_5.png)
+![](ci_cd/images/img_5.png)
 
 После создания репозитория необходимо добавить проект в git, для этого на хосте openshift-build в директории с проектом:
 
@@ -154,7 +154,7 @@ $ git push -u origin master
 
 Для проекта добавляем runner. Предаврительно runner должен быть запущен и зарегистрирован в GitLab CI.
 
-![](/images/img_6.png)
+![](ci_cd/images/img_6.png)
 
 Для пользователя разрешён доступ по ssh к репозиторию - в GitLab CI добавлен ssh ключ в **User settings -> SSH Keys**.
 
@@ -361,7 +361,7 @@ script:
 * OPENSHIFT\_TOKEN = токен пользователя OpenShift - go-pg-crud  
     
 
-![](/images/img_7.png)
+![](ci_cd/images/img_7.png)
 
 Далее необходимо изменить Dockerfile, который мы будем использовать для сборки приложения. Т.к. зависимости для приложения используются несколько раз - на шаге тестирования (Run test) и на шаге сборки образа (Build app), то правильный вариант это провести загрузку зависимостей на шаге тестирования приложения, а на этапе сборки образа (Build app) использовать уже выкачаные зависимости. Использовать будем утилиту dep, которая самостоятельно получает необходимые зависимости для сборки проекта. Итоговый Dockerfile будет выглядеть следующим образом:
 
@@ -385,7 +385,7 @@ ENTRYPOINT ["/go/src/app/go-pg-crud"]
 
 Для управления yaml манифестами будем использовать утилиту kustomize. Нам при сборке обновлённого проекта необходимо менять тег docker образа, т.к. в pipeline мы при каждой сборке приложения сохраняем id коммита в качестве тега образа. Подробнее про [https://kustomize.io/](https://kustomize.io/) .
 
-![](/images/img_8.png)
+![](ci_cd/images/img_8.png)
 
 *kustomization.yaml*:
 
@@ -489,7 +489,7 @@ $ git push
 
 В Gitlab CI должен запуститься pipeline:
 
-![](/images/img_10.png)
+![](ci_cd/images/img_10.png)
 
 
 После успешного выполения pipeline проверяем ресурсы в OpenShift:
