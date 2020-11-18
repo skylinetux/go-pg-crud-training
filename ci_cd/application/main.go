@@ -27,18 +27,20 @@ func main() {
 	servermain.HandleFunc("/save", handleSaveBook)
 	servermain.HandleFunc("/delete", handleDeleteBook)
 
-	serverprometheus := http.NewServeMux()
-	serverprometheus.Handle("/metrics", promhttp.Handler())
+	servermain.Handle("/metrics", promhttp.Handler())
+
+	//serverprometheus := http.NewServeMux()
+	//serverprometheus.Handle("/metrics", promhttp.Handler())
 
 	go func() {
 		http.ListenAndServe(":8080", servermain)
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
 
-	go func() {
-		http.ListenAndServe(":2112", serverprometheus)
-		log.Fatal(http.ListenAndServe(":2112", nil))
-	}()
+//	go func() {
+//		http.ListenAndServe(":2112", serverprometheus)
+//		log.Fatal(http.ListenAndServe(":2112", nil))
+//	}()
 
 	<-finish
 }
