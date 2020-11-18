@@ -348,7 +348,20 @@ alertmanager   ClusterIP   172.30.98.31     <none>        9093/TCP   57s
 
 **Alertmanager-bot** - это сервис для отправки оповещений из alertmanager в telegram. Сайт проекта [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot)
 
-Для запуска alertmanager необходимо создать deploymentconfig и secrets, для хранения пользователя администратора бота и id бота в telegram.
+Перед запуском сервиса alertmanager необходимо [создать бота в Telegram](https://core.telegram.org/bots) и узнать свой или любой другой [id пользователя](https://messenge.ru/kak-uznat-id-telegram/), который будет являться администратором бота.
+
+Далее необходимо заполнить secrets:
+* admin - id пользователя telegram, который будет являться администратором
+* token - id бота telegram
+
+Предварительно admin и token необходимо конвертировать в base64 и добавить в secrets, например:
+
+```console
+$ echo 12345 | base64
+MTIzNDUK
+```
+
+Для запуска alertmanager создаём deploymentconfig и secrets, также нам необходим service для доступа alertmanager к alertmanager-bot:
 
 ```console
 # переходим в директорию alertmanager-bot
@@ -370,5 +383,33 @@ $ oc get svc | grep alertmanager-bot
 alertmanager-bot   ClusterIP   172.30.3.92      <none>        8080/TCP   88s
 ```
 
+После успешного запуска pod проверяем корректность работы alertmanager-bot, например команда /help:
 
+```
+**/help**
+
+**alertmanager_neoflex_training**
+
+I'm a Prometheus AlertManager Bot for Telegram. I will notify you about alerts.
+You can also ask me about my /status, /alerts & /silences
+
+Available commands:
+/start - Subscribe for alerts.
+/stop - Unsubscribe for alerts.
+/status - Print the current status.
+/alerts - List all alerts.
+/silences - List all silences.
+/chats - List all users and group chats that subscribed.
+```
+
+
+
+#### Проверка
+
+После запуска всех сервисов убеждаемся что pod в статусе Running и доступны Prometheus server, Grafana, Alertmanager веб-интерфейсы:
+*  http://prometheus-training-monitoring.apps.ocp-test.<domain_name>
+*  http://grafana-training-monitoring.apps.ocp-test.<domain_name>
+*  http://alertmanager-training-monitoring.apps.ocp-test.<domain_name>
+
+Также необходимо убедиться что метрики корректно собираются и отображаются. Проверяем раздел Status -> Targets в Prometheus, и dashboard в Grafana.
 
