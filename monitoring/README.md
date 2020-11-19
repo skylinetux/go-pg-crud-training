@@ -469,6 +469,7 @@ prometheus-1-pm2tn          1/1     Running     0          17h
 ![](/monitoring/images/img_7.png)
 
 Также проверить что правила(rules) корректно работают, перейти в раздел **Status -> Rules**:
+![](/monitoring/images/img_5.png)
 
 ## Генерируем нагрузку
 
