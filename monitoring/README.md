@@ -79,6 +79,9 @@ func main() {
 }
 ````
 
+При обращении к http://go-pg-crud.go-pg-crud.svc:80/metrics можно увидеть какие метрики отдаёт нам экспортёр:
+![](/monitoring/images/img_3.png)
+
 ## Подготовка окружения для в OpenShift
 
 Для начала необходимо подготовить окружение для запуска системы мониторинга. Необходимо:
@@ -203,7 +206,7 @@ NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 prometheus   ClusterIP   172.30.136.92   <none>        9090/TCP   13m
 ```
 
-Сервис prometheus будет доступен по адресу http://prometheus-training-monitoring.apps.ocp-test.<domain_name>
+Сервис prometheus будет доступен по адресу http://prometheus-training-monitoring.apps.ocp-test.<domain_name> .
 
 ## Grafana
 
@@ -316,6 +319,7 @@ grafana      ClusterIP   172.30.101.198   <none>        3000/TCP   31m
 ```
 
 Сервис grafana будет доступен по адресу http://grafana-training-monitoring.apps.ocp-test.<domain_name> . В интерфейсе grafana будет доступен datasource к prometheus server и добавлен dashboard.
+![](/monitoring/images/img_6.png)
 
 ## Alertmanager
 
@@ -458,6 +462,14 @@ prometheus-1-pm2tn          1/1     Running     0          17h
 
 Также необходимо убедиться что метрики корректно собираются и отображаются. Проверяем раздел **Status -> Targets** в Prometheus, и dashboard в Grafana.
 
+**Status -> Targets**
+![](/monitoring/images/img_4.png)
+
+**Dashboard grafana**
+![](/monitoring/images/img_7.png)
+
+Также проверить что правила(rules) корректно работают, перейти в раздел **Status -> Rules**:
+
 ## Генерируем нагрузку
 
 Для генерации нагрузки будем использовать [yandex-tank](https://github.com/yandex/yandex-tank). Запускаем как и рекомендовано в docker:
@@ -494,6 +506,8 @@ telegraf:
 ```console
 # yandex-tank -c load.yml
 ```
+
+![](/monitoring/images/img_2.png)
 
 Из-за большого количества обращений к сервису go-pg-crud возрастёт количество потоков goroutine генерируемые приложением, на которые у нас в Prometheus server настроено правило:
 
