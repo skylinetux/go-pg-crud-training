@@ -54,7 +54,6 @@ version   4.5.17    True        False         8d      Cluster version is 4.5.17
 * https://kubectl.docs.kubernetes.io/installation/kustomize/
 * https://docs.docker.com/engine/install/centos/
 
-
 ## Общая схема работы мониторинга
 
 ![](/monitoring/images/img_1.png)
@@ -63,7 +62,7 @@ version   4.5.17    True        False         8d      Cluster version is 4.5.17
 * В **Grafana** будем создавать дашборды для визуализации метрик.
 * **Alertmanager** работает в качестве системы оповещения. Получая события из Prometheus, обрабытывая их, Alertmanager будет передавать данные в Alertmanager-bot.
 * **Alertmanager-bot** система отправки оповещений в Telegram. Проект и описание доступны по сслыке [github.com/metalmatze/alertmanager-bot](https://github.com/metalmatze/alertmanager-bot).
-* **Метрики приложения** доступны по ссылке http://go-pg-crud.go-pg-crud.svc:80/metrics. Для этого в само приложение добавлен [экспортёр для golang](https://prometheus.io/docs/guides/go-application/):
+* **Метрики приложения** доступны по ссылке http://go-pg-crud.go-pg-crud.svc:80/metrics. Для этого в приложение добавлен [экспортёр для golang](https://prometheus.io/docs/guides/go-application/):
 
 ```golang
 ...
@@ -80,15 +79,13 @@ func main() {
 }
 ````
 
-**Цель проекта:** получить работающую систему мониторинга с оповещениями пользователей.
-
 ## Подготовка окружения для в OpenShift
 
 Для начала необходимо подготовить окружение для запуска системы мониторинга. Необходимо:
 * Создать namespace
 * Создать учётную запись с правами доступа к метрикам приложений
 
-Создаём namespace с именем training-monitoring и serviceaccount(учётная запись) с именем metricsexporter. Для metricsexporter предоставляем роли cluster-reade и view для доступа к метрикам сервисов. Под учётной записью metricsexporter будет запущен только pod с prometheus server. Всё остальные pod будут использовать учётную запись default.
+Создаём namespace с именем training-monitoring и serviceaccount(учётная запись) с именем metricsexporter. Для metricsexporter предоставляем роли cluster-reader и view для доступа к метрикам сервисов. Под учётной записью metricsexporter будет запущен только pod с prometheus server. Всё остальные pod будут использовать учётную запись default.
 
 ```console
 # переходим в директорию namespace
@@ -166,9 +163,10 @@ groups:
 
 ```
 
-Важно отметить, что адрес сервиса alertmanager:9093 указан по имени service, и аналогично go-pg-crud.go-pg-crud.svc:80 - serivce с именем go-pg-crud в namespace go-pg-crud. Доступ к service в других namespace мы предоставили выше для учётной записи metricsexporter. Обращение через service в нашем случае удобнее - мы собираем метрики внутри сети OpenShift, но возможен и вариант указания route необходимых сервисов, но тогда обращения к метрикам будут дополнительно проходить через балансировщик OpenShift, что не совсем рационально, но для сервисов вне OpenShift такой вариант является основным.
+Важно отметить, что адрес сервиса alertmanager:9093 указан по имени service, аналогично для go-pg-crud.go-pg-crud.svc:80 - serivce с именем go-pg-crud в namespace go-pg-crud. Доступ к service в других namespace мы предоставили выше для учётной записи metricsexporter, когда предоставили роли cluster-reader и view. 
+Обращение через service в нашем случае удобнее - мы собираем метрики внутри сети OpenShift, но возможен и вариант указания route необходимых сервисов. При настройке через route обращения к метрикам будут дополнительно проходить через балансировщик OpenShift, что не совсем рационально. Для сервисов вне OpenShift настройка сбора метрик через внешний адрес является основным.
 
-Также создаём route и service для доступа к prometheus server. Полностью создание prometheus service в OpenShift будет выглядеть следующим образом.
+Также создаём route и service для доступа к prometheus server. Полностью создание prometheus service в OpenShift будет выглядеть следующим образом:
 
 ```console
 # переходим в директорию namespace
@@ -188,18 +186,18 @@ NAME                  READY   STATUS              RESTARTS   AGE
 prometheus-1-deploy   1/1     Running             0          4s
 prometheus-1-pm2tn    0/1     ContainerCreating   0          2s
 
-# проверяем создание configmaps
+# проверяем наличие configmaps
 $ oc get cm
 NAME                DATA   AGE
 prometheus-config   1      13m
 prometheus-rules    1      13m
 
-# проверяем создание route
+# проверяем наличие route
 $ oc get route
 NAME         HOST/PORT                                                    PATH   SERVICES     PORT   TERMINATION   WILDCARD
 prometheus   prometheus-training-monitoring.apps.ocp-test.<domain_name>         prometheus   9090                 None
 
-# проверяем создание service
+# проверяем наличие service
 $ oc get svc
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 prometheus   ClusterIP   172.30.136.92   <none>        9090/TCP   13m
@@ -213,7 +211,7 @@ prometheus   ClusterIP   172.30.136.92   <none>        9090/TCP   13m
 
 Для запуска grafana необходимо также создать deploymentconfig, в котором будет запущен образ docker.io/grafana/grafana, и конфигурационные файлы:
 * grafana.ini - основной файл конфигурации grafana
-* go-pg-crud_dashboard.json - заранее подготовленный дашборд для мониторинга приложения на golang, за основу взят [dashboard с сайта grafana](https://grafana.com/grafana/dashboards/6671)
+* go-pg-crud_dashboard.json - заранее подготовленный dashboard для мониторинга приложения на golang, за основу взят [dashboard с сайта grafana](https://grafana.com/grafana/dashboards/6671)
 * dashboards.yaml - верхнеуровневый dashboard, в котором указываем путь для других dashboard
 * datasources.yaml - файл конфигурации подключений к prometheus server или другому источнику данных
 
@@ -236,7 +234,7 @@ plugins = /var/lib/grafana/plugins
 provisioning = /etc/grafana/provisioning
 
 [server]
-http_port = 3000 # grafana будет запущена на 3000 порту
+http_port = 3000 # grafana будет слушать порт 3000
 ```
 
 **dashboards.yaml**
@@ -276,6 +274,8 @@ http_port = 3000 # grafana будет запущена на 3000 порту
 
 **go-pg-crud_dashboard.json** приводить не буду, т.к. подробное описание можно посмотреть на [сайте grafana](https://grafana.com/grafana/dashboards/6671)
 
+Применяем конфигурацию:
+
 ```console
 # переходим в директорию grafana
 $ cd grafana
@@ -298,24 +298,24 @@ grafana-1-pdjwh       0/1     ContainerCreating   0          1s
 prometheus-1-deploy   0/1     Completed           0          53m
 prometheus-1-pm2tn    1/1     Running             0          53m
 
-# проверяем создание configmaps
+# проверяем наличие configmaps
 $ oc get cm | grep grafana
 grafana-config                 1      30m
 grafana-dashboard-go-pg-crud   1      30m
 grafana-dashboards             1      30m
 grafana-datasources            1      30m
 
-# проверяем создание route
+# проверяем наличие route
 $ oc get route | grep grafana
 grafana      grafana-training-monitoring.apps.ocp-test.<domain_name>             grafana      3000                 None
 
-# проверяем создание service
+# проверяем наличие service
 $ oc get service | grep grafana
 grafana      ClusterIP   172.30.101.198   <none>        3000/TCP   31m
 
 ```
 
-Сервис grafana будет доступен по адресу http://grafana-training-monitoring.apps.ocp-test.<domain_name>
+Сервис grafana будет доступен по адресу http://grafana-training-monitoring.apps.ocp-test.<domain_name> . В интерфейсе grafana будет доступен datasource к prometheus server и добавлен dashboard.
 
 ## Alertmanager
 
@@ -333,11 +333,11 @@ global:
 
 # блок настройки оповещений
 route:
-  group_by: ['alertname'] # груповать по label
-  group_wait: 10s # ожидание перед отправкой оповещений
-  group_interval: 10s # промежуток времени перед отправками оповещений
-  repeat_interval: 120s # интервал повтора оповещения
-  receiver: 'alertmananger-bot' # куда и как отправлять, блок ниже
+  group_by: ['alertname'] # груповать события по label
+  group_wait: 10s # ожидание перед отправкой событий
+  group_interval: 10s # промежуток времени перед отправками событий
+  repeat_interval: 120s # интервал повтора отправки событий
+  receiver: 'alertmananger-bot' # чем будем отправлять, описание отправки в блоке receivers
 receivers: # куда и как отправлять
 - name: 'alertmananger-bot'
   webhook_configs: # используется webhook
@@ -358,7 +358,7 @@ service/alertmanager created
 deploymentconfig.apps.openshift.io/alertmanager created
 route.route.openshift.io/alertmanager created
 
-# проверяем наличе запущенных pod
+# проверяем наличие запущенных pod
 $ oc get pod | grep alertmanager
 alertmanager-1-c4wvr    1/1     Running     0          38s
 alertmanager-1-deploy   0/1     Completed   0          41s
@@ -408,16 +408,16 @@ secret/alertmanager-bot created
 service/alertmanager-bot created
 deploymentconfig.apps.openshift.io/alertmanager-bot created
 
-# проверяем наличе запущенных pod
+# проверяем наличие запущенных pod
 oc get pod | grep alertmanager-bot
 alertmanager-bot-1-deploy   0/1     Completed   0          53s
 alertmanager-bot-1-zshl6    1/1     Running     0          50s
 
-# проверяем создание secrets
+# проверяем наличие secrets
 $ oc get secrets | grep alertmanager-bot
 alertmanager-bot                  Opaque                                2      73s
 
-# проверяем создание service
+# проверяем наличие service
 $ oc get svc | grep alertmanager-bot
 alertmanager-bot   ClusterIP   172.30.3.92      <none>        8080/TCP   88s
 ```
@@ -425,9 +425,9 @@ alertmanager-bot   ClusterIP   172.30.3.92      <none>        8080/TCP   88s
 После успешного запуска pod проверяем корректность работы alertmanager-bot, например команда /help:
 
 ```
-**/help**
+*/help*
 
-**alertmanager_neoflex_training**
+*alertmanager_neoflex_training*
 
 I'm a Prometheus AlertManager Bot for Telegram. I will notify you about alerts.
 You can also ask me about my /status, /alerts & /silences
@@ -441,14 +441,20 @@ Available commands:
 /chats - List all users and group chats that subscribed.
 ```
 
-
-
-#### Проверка работы системы мониторинга и оповещенийлк
+## Проверка работы системы мониторинга и оповещений
 
 После запуска всех сервисов убеждаемся что pod в статусе Running и доступны Prometheus server, Grafana, Alertmanager веб-интерфейсы:
 *  http://prometheus-training-monitoring.apps.ocp-test.<domain_name>
 *  http://grafana-training-monitoring.apps.ocp-test.<domain_name>
 *  http://alertmanager-training-monitoring.apps.ocp-test.<domain_name>
+
+```console
+$ oc get pod | grep Running
+alertmanager-1-6lvw6        1/1     Running     0          15h
+alertmanager-bot-1-zshl6    1/1     Running     0          15h
+grafana-1-pdjwh             1/1     Running     0          16h
+prometheus-1-pm2tn          1/1     Running     0          17h
+```
 
 Также необходимо убедиться что метрики корректно собираются и отображаются. Проверяем раздел **Status -> Targets** в Prometheus, и dashboard в Grafana.
 
@@ -466,15 +472,15 @@ $ docker run --entrypoint /bin/bash -v $(pwd):/var/loadtest -v $HOME/.ssh:/root/
 phantom:
   address: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>:80 # [Target's address]:[target's port]
   writelog: all
-  uris: # список url которые будем дёргать
+  uris: # список url которые будем вызывать
     - /index.html
     - /book.html?id=10
     - /book.html?id=11
     - /book.html?id=12
   load_profile:
     load_type: rps # schedule load by defining requests per second
-    schedule: const(1000, 10m) # starting from 1rps growing linearly to 10rps during 10 minutes
-  headers: # обязательно надо указать в заголовках хостнейм сервиса, к которому будем обращаться
+    schedule: const(1000, 10m) # starting from 1rps growing linearly to 1000rps during 10 minutes
+  headers:
     - "[Host: go-pg-crud-go-pg-crud.apps.ocp-test.<domain_name>]"
     - "[Connection: close]"
 console:
@@ -489,7 +495,7 @@ telegraf:
 # yandex-tank -c load.yml
 ```
 
-Из-за большого количества обращений к сервису go-pg-crud возрастёт количество потоков goroutine, на которые у нас в Prometheus server настроено правило:
+Из-за большого количества обращений к сервису go-pg-crud возрастёт количество потоков goroutine генерируемые приложением, на которые у нас в Prometheus server настроено правило:
 
 ```
 ...
@@ -497,7 +503,7 @@ telegraf:
 ...
 ```
 
-В результате Prometheus Server сгенерирует событие и отправит его в Alertmanager, а Alertmanager уже отправит сгенерированное событие в Alertmanager-bot. В результате в Telegram будет получено сообщение вида:
+В результате prometheus Server сгенерирует событие и отправит его в Alertmanager, а Alertmanager уже отправит сгенерированное событие в Alertmanager-bot. В результате в Telegram будет получено сообщение вида:
 
 ```
 🔥 FIRING 🔥
