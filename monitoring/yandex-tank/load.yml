@@ -1,0 +1,19 @@
+phantom:
+  address: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local:80 # [Target's address]:[target's port]
+  writelog: all
+  uris:
+    - /index.html
+    - /book.html?id=10
+    - /book.html?id=11
+    - /book.html?id=12
+  load_profile:
+    load_type: rps # schedule load by defining requests per second
+    schedule: const(1000, 10m) # starting from 1rps growing linearly to 1000rps during 10 minutes
+  headers:
+    - "[Host: go-pg-crud-go-pg-crud.apps.ocp-test.neoflex.local]"
+    - "[Connection: close]"
+console:
+  enabled: true # enable console output
+telegraf:
+  enabled: false # let's disable telegraf monitoring for the first time
+
